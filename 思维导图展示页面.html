@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>Java 学习录 · 思维导图</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  /* —— 古籍配色：宣纸黄 + 墨黑 + 朱砂红 —— */
+  :root {
+    --paper: #F5F0E8;       /* 宣纸黄 */
+    --paper-light: #FBF6E9; /* 稍浅宣纸 */
+    --ink: #2C2416;         /* 浓墨 */
+    --ink-soft: #6B5D45;    /* 淡墨 */
+    --ink-faint: #B8AC8E;   /* 浅墨晕 */
+    --vermilion: #8B2500;   /* 朱砂红 */
+    --vermilion-light: #F2DCD0;
+    --border: #D9CFB8;      /* 旧纸边缘 */
+  }
+
+  body {
+    margin: 0;
+    font-family: "STKaiti", "KaiTi", "楷体", "SimSun", "宋体", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--paper);
+    /* 宣纸纹理 */
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(139, 37, 0, 0.03) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(44, 36, 22, 0.04) 0%, transparent 50%),
+      repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 2px,
+        rgba(44, 36, 22, 0.015) 2px,
+        rgba(44, 36, 22, 0.015) 4px
+      );
+  }
+
+  /* —— 工具栏 —— */
+  .toolbar {
+    position: fixed; top: 12px; left: 12px; z-index: 99;
+    background: var(--paper-light);
+    backdrop-filter: blur(8px);
+    padding: 10px 14px; border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(44, 36, 22, 0.15), inset 0 0 0 1px var(--border);
+    font-size: 13px; line-height: 1.6;
+    max-width: 200px;
+    /* 折叠动画：从右上→右下→左下 蜷缩到左上角 */
+    transition: clip-path 500ms cubic-bezier(.65,.05,.36,1),
+                opacity    500ms ease,
+                transform  500ms ease;
+    clip-path: inset(0 0 0 0);
+    transform-origin: top left;
+  }
+  /* 折本样式的顶部朱砂线 */
+  .toolbar::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--vermilion), transparent);
+  }
+  .toolbar h1 {
+    font-size: 15px; margin: 0 0 4px; color: var(--ink);
+    display:flex; align-items:center; gap:8px;
+    font-weight: 700; letter-spacing: 1px;
+  }
+  /* 标题占满剩余宽度，把两个图标按钮顶到最右边 */
+  .toolbar h1 > #docTitle { flex: 1 1 auto; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toolbar .meta { color: var(--ink-soft); font-size: 12px; }
+  .toolbar a {
+    color: var(--vermilion);
+    text-decoration: none; margin-right: 8px; cursor: pointer;
+    border-bottom: 1px dotted transparent;
+    transition: border-color .2s;
+  }
+  .toolbar a:hover {
+    border-bottom-color: var(--vermilion);
+    text-decoration: none;
+  }
+  .toolbar .icon-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:50%;
+    /* 标题很长时不要把图标挤扁（默认 flex-shrink:1 会把 22px 压到十几 px） */
+    flex: 0 0 auto;
+    color: var(--ink-soft); font-size:14px; line-height:1; cursor:pointer;
+    transition: background-color .2s, color .2s;
+  }
+  .toolbar .icon-btn:hover {
+    background: var(--vermilion-light); color: var(--vermilion);
+  }
+  /* 「导图列表」按钮：展开时保持朱砂高亮，表示面板开着 */
+  .toolbar .icon-btn.active {
+    background: var(--vermilion);
+    color: var(--paper-light);
+  }
+
+  /* —— 导图列表（点 ☰ 直接展开列表）——
+     不用原生 <select>：它展开后的候选列表是操作系统画的，
+     <option> 的配色几乎改不动，跟宣纸/朱砂主题配不上。
+     这里自己画一份，才能完全控制配色。 */
+  .tree-list { display: none; margin-top: 8px; }
+  .tree-list.open { display: block; }
+
+  /* 高度上限：约 8 条。每条 31px（行高 21 + 内边距 8 + 边框 2），
+     8 × 31 = 248。条目再多就滚动，不撑高工具栏。
+     这个值跟着下面的 padding/line-height 走，改那边记得一起改。 */
+  .tree-list {
+    max-height: 248px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  /* 滚动条也做成朱砂系，别插一个系统灰条进来 */
+  .tree-list { scrollbar-width: thin; scrollbar-color: var(--vermilion-light) transparent; }
+  .tree-list::-webkit-scrollbar { width: 6px; }
+  .tree-list::-webkit-scrollbar-track { background: transparent; }
+  .tree-list::-webkit-scrollbar-thumb {
+    background: var(--vermilion-light);
+    border-radius: 3px;
+  }
+  .tree-list::-webkit-scrollbar-thumb:hover { background: var(--vermilion); }
+
+  .tree-list .tl-item {
+    display: block;
+    padding: 4px 8px;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    color: var(--ink);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: background-color .15s, border-color .15s, color .15s;
+  }
+  .tree-list .tl-item:hover {
+    background: var(--vermilion-light);
+    border-color: var(--vermilion);
+  }
+  /* 当前选中：朱砂底 + 纸上字色，跟工具栏其它控件一致 */
+  .tree-list .tl-item.current {
+    background: var(--vermilion);
+    border-color: var(--vermilion);
+    color: var(--paper-light);
+  }
+  /* 读失败的条目：标灰、不可点 */
+  .tree-list .tl-item.disabled {
+    color: var(--ink-faint);
+    cursor: not-allowed;
+    text-decoration: line-through;
+  }
+  .tree-list .tl-item.disabled:hover {
+    background: transparent;
+    border-color: transparent;
+  }
+
+  /* —— 折叠状态：右上右下左下卷起到左上 —— */
+  .toolbar.collapsed {
+    clip-path: inset(0 100% 100% 0);
+    opacity: 0;
+    transform: scale(.6);
+    pointer-events: none;
+  }
+
+  /* —— 折叠后显示的朱砂红小球 —— */
+  .fab {
+    position: fixed; top: 14px; left: 14px; z-index: 100;
+    width: 36px; height: 36px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--vermilion) 0%, #6B1A00 60%, var(--ink) 100%);
+    box-shadow: 0 2px 8px rgba(139, 37, 0, 0.4), inset 0 1px 2px rgba(255, 200, 180, 0.3);
+    cursor: pointer; display: none;
+    align-items: center; justify-content: center;
+    color: var(--paper-light); font-size: 16px;
+    transition: opacity 380ms ease, transform 380ms cubic-bezier(.34,1.56,.64,1);
+    opacity: 0; transform: scale(.3);
+  }
+  .fab::after {
+    content: "☰"; /* 展开图标 */
+  }
+  .fab.show { display:flex; opacity: 1; transform: scale(1); }
+  .fab:hover {
+    background: linear-gradient(135deg, #A03000 0%, var(--vermilion) 50%, var(--ink) 100%);
+  }
+
+  /* —— 浮动 tooltip —— */
+  .fab-tip {
+    position: fixed; top: 24px; left: 60px; z-index: 100;
+    background: var(--ink); color: var(--paper);
+    padding: 4px 10px; border-radius: 4px;
+    font-size: 12px; pointer-events: none;
+    opacity: 0; transition: opacity .2s;
+    white-space: nowrap;
+    border: 1px solid var(--vermilion);
+  }
+  .fab-tip.show { opacity: 1; }
+  .fab-tip::before {
+    content:""; position:absolute; left:-5px; top:50%; transform: translateY(-50%);
+    border:5px solid transparent; border-right-color: var(--ink);
+  }
+
+  #status {
+    position: fixed; bottom: 12px; left: 12px;
+    font-size: 12px; color: var(--ink-soft);
+    background: var(--paper-light);
+    padding: 6px 10px; border-radius: 4px; z-index: 99;
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(44, 36, 22, 0.1);
+  }
+
+  /* —— 画布 ——
+     用 class 而不是 id：多份导图 = 多个 <svg>，id 选择器只认一个。
+     注意容器必须直接是 <svg>，不能改成 <div> 包一层 ——
+     markmap 是往你给的元素里 append('g') 的，塞进 div 里的 <g> 渲染不出来。 */
+  .mm-canvas { height: 100vh; width: 100%; display: block; }
+  /* 非当前显示的那张图藏起来。用 display 而不是 visibility，
+     避免隐藏的图仍然参与布局、撑出滚动条。 */
+  .mm-canvas:not(.is-active) { display: none; }
+
+  /* —— markmap 节点文字 ——
+     注意：文字**不是** SVG <text>，而是 <foreignObject> 里的 HTML <div>。
+     所以不能写 `svg text`（实测匹配 0 个元素，整条规则从未生效），
+     要直接选中 foreignObject 里的 div。 */
+  .mm-canvas foreignObject div {
+    color: var(--ink) !important;
+    font-family: "STKaiti", "KaiTi", "楷体", "PingFang SC", "Microsoft YaHei", sans-serif !important;
+  }
+
+  /* —— markmap 连线 —— */
+  .mm-canvas path.markmap-link {
+    fill: none;
+    stroke-linecap: round;
+  }
+  /* 新出现的曲线做"生长"动画：先只画虚线间隔，再把偏移收回去。
+     时长需与 JS CONFIG.growDurationMs 一致。 */
+  .mm-canvas path.markmap-link.grow {
+    stroke-dasharray: var(--len, 9999);
+    stroke-dashoffset: var(--len, 9999);
+    animation: mm-grow 480ms cubic-bezier(.33, .06, .2, 1) forwards;
+  }
+  @keyframes mm-grow {
+    to { stroke-dashoffset: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar" id="toolbar">
+  <h1>
+    <span id="docTitle">思维导图</span>
+    <span class="icon-btn" data-action="trees" id="treesBtn" title="导图列表">☰</span>
+    <span class="icon-btn" data-action="collapse" title="收起工具栏">▾</span>
+  </h1>
+  <!-- 导图列表：点标题行那个 ☰ 直接展开列表（一步到位） -->
+  <div class="tree-list" id="treeList"></div>
+  <div>
+    <a data-action="fit">适配</a>
+    <a data-action="expand">展开</a>
+    <a data-action="collapse-all">收起</a>
+  </div>
+  <div>
+    <!-- 转换面板入口：按钮写死在 HTML 里（不靠 JS 注入），
+         点击逻辑在 convert-ui.js 的 data-action 分发里处理 -->
+    <a data-action="convert">＋ 转换</a>
+    <a data-action="settings">⚙ 设置</a>
+  </div>
+  <div>
+    <a data-action="edit">✎ 编辑导图</a>
+    <a data-action="portcheck">查看端口 PID</a>
+  </div>
+</div>
+<div class="fab" id="fab" title="展开工具栏"></div>
+<div class="fab-tip" id="fabTip">思维导图</div>
+<div id="status">加载中…</div>
+
+<!-- 画布。每份导图一个独立 <svg>，互不干扰：
+     各自记住自己的展开状态和缩放位置，切换来回不丢。
+     第一个是首屏要渲染的，其余在第一次切过去时才懒创建。 -->
+<svg class="mm-canvas is-active" id="app-java"></svg>
+
+
+
+<!-- 协议自检，必须放在 module 之前、且不依赖任何 import。
+     原因：模块顶部要从 CDN 动态 import markmap，file:// 或断网时
+     这一步会挂住或抛错，模块内的检查根本执行不到 —— 页面就永远停在"加载中…"。
+     这里用普通脚本，先检测、先给提示。 -->
+<script>
+  if (location.protocol !== 'http:' && location.protocol !== 'https:') {
+    document.getElementById('status').innerHTML =
+      '无法读取内容：浏览器不允许 <code>file://</code> 页面读取本地文件（CORS 限制）。'
+      + '<br>请用本目录的 <b>启动.bat</b> 打开，或手动执行：'
+      + '<br><code>python -m http.server 8000</code>'
+      + '<br>然后访问 <code>http://localhost:8000/</code>';
+  }
+</script>
+
+<script type="module">
+/* ═══════════════════════════════════════════════════════════════════
+   Java 学习录 · 思维导图
+
+   渲染   markmap（ESM，自 esm.sh 动态加载）
+   配色   宣纸黄 + 墨黑 + 朱砂红
+
+   模块划分
+     0  配置        CONFIG            —— 所有可调参数集中在这里
+     1  内容        loadTrees()       —— 从 notes/index.json + notes/*.md 读内容
+     2  工具栏      initToolbar()     —— 导图列表 / 折叠 / 适配 / 展开 / 收起
+     3  渲染        createMindmap()   —— 建实例、适配、换展开层级
+     4  连线        applyLinkStyle()  —— 按层级上色 + 新生曲线生长动画
+     5  节点圆心    attachCircleAlign() —— 把圆点挪到文字右侧垂直居中
+     6  交互        attachInteractions() —— 双击空白适配
+     7  启动        main()
+
+   多份导图怎么共存
+     每份导图 = 一个独立 <svg class="mm-canvas"> + 一个独立 markmap 实例，
+     状态存在实例表里（见 section 3）。各自记住自己的展开层级和缩放位置，
+     切换来回不丢。首屏只渲染第一份，其余在第一次切过去时才懒创建。
+
+   内容为什么用 fetch 而不是页内 script 块
+     file:// 协议下 fetch 会被浏览器 CORS 拦截，所以必须经由本地服务器打开，
+     双击 html 不行 —— 请用目录里的「启动.bat」。
+
+   一条重要约定
+     所有"装饰"逻辑（4/5/6）都挂在 mm 实例上，随实例一起消亡。
+     标记用实例自己的属性（mm.__x），不要用模块级布尔量 ——
+     否则实例重建后标记还留着，装饰就不会重新挂上去（连线会褪成无色）。
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── 0. 配置 ────────────────────────────────────────────────────── */
+
+const CONFIG = {
+  markmap: {
+    // 展开/收起时节点的滑动时长。0 = 瞬切。
+    duration: 280,
+    maxWidth: 320,
+    initialExpandLevel: 2,
+  },
+  // 节点文字配色，按层级循环（节点自带 color 用不到文字，这里只影响连线锚点）
+  nodeColors: ['#8B2500', '#2C2416', '#6B5D45', '#A0522D', '#4A3728', '#6B1A00'],
+  // 连线配色：朱砂起笔，逐层淡墨，与节点文字色阶呼应
+  linkColors: ['#B06440', '#8F6E52', '#A08A66', '#BDB094', '#CFC4AA'],
+  linkWidths: [1.8, 1.4, 1],   // 按层级取，超出取最后一个
+  linkOpacity: { start: 1, step: 0.13, min: 0.5 },
+  // 生长动画时长，需与 CSS 里 @keyframes mm-grow 的时长一致
+  growDurationMs: 480,
+  // 首屏静默期：这段时间之后不再给连线上"生长"动画（首屏的线不该"长"）
+  quietWindowMs: 700,
+  // 双击空白 → 适配
+  fit: { delayMs: 320, debounceMs: 400 },
+  // 「展开全部」/「收起全部」对应的 initialExpandLevel
+  expandLevel: { all: Infinity, none: 1 },
+  // 导图清单所在文件（相对本页路径）
+  indexUrl: 'notes/index.json',
+  // 首屏渲染哪一份（index.json 里的 id）
+  defaultTreeId: 'java',
+  // 是否是「本地服务器」打开。file:// 下 fetch 会被 CORS 拦，只能给出提示
+  isLocalServer: location.protocol === 'http:' || location.protocol === 'https:',
+};
+
+/* ── 1. 内容 ────────────────────────────────────────────────────── */
+/* 内容全部放在外部 .md 文件里，靠 notes/index.json 登记：
+       notes/index.json  →  [{ id, title, file }, ...]
+       notes/<file>      →  Markdown 原文
+   加一份导图 = 新增一个 .md + 在 index.json 里加一行，不用碰本文件任何代码。 */
+
+/** 读清单 + 读所有 Markdown 正文。用 text() 而不是 json()——
+    因为这里要的是纯文本，不需要再序列化一次。 */
+async function loadTrees() {
+  const res = await fetch(CONFIG.indexUrl, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`读取 ${CONFIG.indexUrl} 失败（HTTP ${res.status}）`);
+  const index = await res.json();
+  const trees = Array.isArray(index.trees) ? index.trees : [];
+
+  const errors = [];
+  await Promise.all(trees.map(async (tree) => {
+    try {
+      const r = await fetch(tree.file, { cache: 'no-store' });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      tree.md = await r.text();
+    } catch (err) {
+      tree.md = null;
+      errors.push(`${tree.file}：${err.message}`);
+    }
+  }));
+
+  return { trees, errors };
+}
+
+/* ── 2. 工具栏 ──────────────────────────────────────────────────── */
+/* 纯 UI，不依赖 markmap；动作通过 window.mindmap 反查，因此可以先于渲染初始化 */
+
+function initToolbar() {
+  const toolbar = document.getElementById('toolbar');
+  const fab = document.getElementById('fab');
+  const fabTip = document.getElementById('fabTip');
+
+  // 「动作」部分：显式注册，不用内联 onclick，也不用 attach 到 window
+  const actions = {
+    fit: () => window.mindmap.fit(),
+    expand: () => window.mindmap.setExpandLevel(CONFIG.expandLevel.all),
+    'collapse-all': () => window.mindmap.setExpandLevel(CONFIG.expandLevel.none),
+    trees: () => setTreeListOpen(),
+    collapse: () => {
+      setTreeListOpen(false);      // 顺手收起列表，免得下次展开时还开着
+      toolbar.classList.add('collapsed');
+      // 动画进行到一半时再显示小球，呈现"卷缩到小球"的感觉
+      setTimeout(() => fab.classList.add('show'), 380);
+    },
+  };
+
+  const runAction = (name) => { const fn = actions[name]; if (fn) fn(); };
+
+  // 工具栏上的点击统一在这里分流。注意顺序：
+  // 先看是不是列表项（在工具栏内部），再看是不是 data-action 按钮。
+  toolbar.addEventListener('click', (e) => {
+    const item = e.target.closest('.tl-item');
+    if (item) {
+      e.preventDefault();
+      if (item.classList.contains('disabled')) return;
+      window.mindmap.activate(item.dataset.treeId);   // 选完会顺手收起列表
+      return;
+    }
+    const el = e.target.closest('[data-action]');
+    if (!el) return;
+    e.preventDefault();
+    runAction(el.dataset.action);
+  });
+
+  fab.addEventListener('click', () => {
+    toolbar.classList.remove('collapsed');
+    toolbar.style.pointerEvents = 'auto';
+    fab.classList.remove('show');
+  });
+
+  // 鼠标悬停小球显示提示
+  fab.addEventListener('mouseenter', () => fabTip.classList.add('show'));
+  fab.addEventListener('mouseleave', () => fabTip.classList.remove('show'));
+}
+
+/** 把导图列表画出来（点 ☰ 直接看到它，不再有二次点击的下拉框）。
+    读失败的条目标灰、不可点，并把失败原因放进 title。 */
+function renderTreeList(trees, errors = []) {
+  const list = document.getElementById('treeList');
+  list.textContent = '';
+  trees.forEach((tree) => {
+    const item = document.createElement('span');
+    item.className = 'tl-item';
+    item.dataset.treeId = tree.id;
+    item.textContent = tree.title || tree.id;
+    if (!tree.md) {
+      item.classList.add('disabled');
+      const why = errors.find((m) => m.startsWith(tree.file));
+      item.title = why ? `读取失败 — ${why}` : '读取失败';
+    }
+    list.appendChild(item);
+  });
+}
+
+/** 标记哪一项是当前激活的 */
+function markActiveInList(id) {
+  document.querySelectorAll('#treeList .tl-item').forEach((el) => {
+    el.classList.toggle('current', el.dataset.treeId === id);
+  });
+}
+
+/** 让当前项滚进可视区。
+    列表限高可滚动后，导图一多、当前项又排在后面时，
+    展开列表会看不见自己在哪一项 —— 这里主动滚一下。 */
+function revealActiveInList() {
+  const cur = document.querySelector('#treeList .tl-item.current');
+  if (cur) cur.scrollIntoView({ block: 'nearest' });
+}
+
+/* ── 3. 渲染 ────────────────────────────────────────────────────── */
+
+const [{ Markmap }, { Transformer }] = await Promise.all([
+  import('https://esm.sh/markmap-view@0.18.10'),
+  import('https://esm.sh/markmap-lib@0.18.10'),
+]);
+
+const transformer = new Transformer();
+
+function markmapOptions() {
+  // 节点文字色与连线色都跟主题走。深色主题下文字不能还是墨色（墨色背景 = 看不清），
+  // 所以这里直接从 computedStyle 取当前主题里 --ink 的实际值，而不是写死。
+  const root = document.documentElement;
+  const ink = getComputedStyle(root).getPropertyValue('--ink').trim() || '#2C2416';
+  return {
+    ...CONFIG.markmap,
+    color: (node) => CONFIG.nodeColors[node.depth % CONFIG.nodeColors.length],
+    textStyle: { color: ink, ...CONFIG.markmap.textStyle },
+  };
+}
+
+/** 取 markmap 的 <svg>（就是这个导图专属的那个 .mm-canvas 元素）。
+    单独抽出来是因为 markmap 的 API 在 .svg.node() / .svg 之间变过，
+    集中一处防御比散落各处理解成本低。 */
+function svgOf(mm) {
+  const s = mm.svg;
+  return (s && typeof s.node === 'function') ? s.node() : s;
+}
+
+/** 建实例并挂上全部装饰。
+    container 是这个导图专属的 <svg>，tree.md 是它的 Markdown 正文。 */
+function createMindmap(container, tree) {
+  const root = transformer.transform(tree.md).root;
+
+  const mm = Markmap.create(container, markmapOptions(), root);
+  mm.fit();
+
+  attachCircleAlign(mm);
+  attachInteractions(mm);
+  applyLinkStyle(mm, { animate: false });
+  patchRenderData(mm, tree);
+  muteInitialGrowth(mm);
+
+  return mm;
+}
+
+/** 深度优先遍历 markmap 数据树（node 形如 { payload, children, ... }）。
+    用于编辑保存后按快照重写每个节点的展开状态。 */
+function walkNodes(node, fn) {
+  fn(node);
+  if (node.children) node.children.forEach((c) => walkNodes(c, fn));
+}
+
+/** 给树每个节点标 __pos（位置编号链，如 "0" 根、"0.1.2" 子孙）。
+    从根往下第几个子的链——结构没变，位置链就一致；改了文本不影响位置。 */
+function assignPositions(root) {
+  (function walk(node, pos) {
+    node.__pos = pos;
+    if (node.children) node.children.forEach((c, i) => walk(c, pos + '.' + i));
+  })(root, '0');
+}
+
+/** 换展开层级。
+    复用当前实例（而不是 destroy + 重建）：装饰全部挂在实例上，
+    重建出来的新实例没有这些补丁，连线和圆点就都不会生效了。
+    注意 setOptions 只接受「一个完整的 options 对象」—— 传第二个参数
+    试图只覆盖 initialExpandLevel 会被直接忽略（实测层级不生效）。 */
+function setExpandLevel(mm, tree, level) {
+  mm.setOptions({ ...markmapOptions(), initialExpandLevel: level });
+  mm.setData(transformer.transform(tree.md).root);
+}
+
+/* —— 实例表 ——
+   每份导图一个独立实例，第一次切过去时才建，之后缓存复用。
+   这样各自记住自己的展开状态和缩放位置，切换来回不丢；
+   同时首屏只渲染一份，导图再多也不会拖慢打开速度。 */
+const instances = new Map();     // tree.id → { tree, el, mm }
+
+/** 找一个可用于该 id 的画布：
+    ① 已经认领了该 id 的；② 还没有认领过的（首屏那个写死在 HTML 里）。 */
+function findCanvas(id) {
+  const all = Array.from(document.querySelectorAll('.mm-canvas'));
+  return all.find((el) => el.dataset.treeId === id)
+      || all.find((el) => !el.dataset.treeId)
+      || null;
+}
+
+/** 激活某份导图：没建过就建，建过就直接用 */
+function activateTree(trees, id) {
+  const tree = trees.find((t) => t.id === id);
+  if (!tree || !tree.md) return false;
+
+  let entry = instances.get(id);
+  if (!entry) {
+    // 复用页面上已有的画布，没有才新建（首屏那份已写死在 HTML 里）
+    const el = findCanvas(id) || (() => {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'mm-canvas');
+      document.body.appendChild(svg);
+      return svg;
+    })();
+    el.dataset.treeId = id;
+    entry = { tree, el, mm: null };
+    instances.set(id, entry);
+  }
+
+  // 切换显隐。按「元素身份」而不是 dataset 匹配 ——
+  // 否则万一有两个画布共用同一个 id，会被同时激活，
+  // 而 querySelector('.is-active') 只会取到靠前的那个（踩过）。
+  document.querySelectorAll('.mm-canvas').forEach((el) => {
+    el.classList.toggle('is-active', el === entry.el);
+  });
+
+  // 首次激活时才真正渲染。放在设完 is-active 之后：画布得先可见，
+  // 否则 fit() 量到的是 display:none 下的零尺寸。
+  if (!entry.mm) entry.mm = createMindmap(entry.el, tree);
+
+  // 工具栏跟着切。
+  // 先记下当前激活的 id —— 工具栏的「适配/展开/收起」都靠它找实例，
+  // 忘了赋值的话动作会一直作用在默认那份上（踩过）。
+  activeTreeId = id;
+  markActiveInList(id);
+  document.title = `${tree.title} · 思维导图`;
+  document.getElementById('docTitle').textContent = tree.title;
+  document.getElementById('fabTip').textContent = tree.title;
+
+  return true;
+}
+
+/* ── 4. 连线 ────────────────────────────────────────────────────── */
+
+/**
+ * 按层级给连线上色。
+ * markmap 本来就用 d3.linkHorizontal() 画的是三次贝塞尔曲线，
+ * 曲线一直都在，看不见只是因为原来有条 CSS 把它刷成了浅墨 #B8AC8E
+ * （与宣纸底对比度约 2:1，远低于图形可见所需的 3:1）。
+ *
+ * @param animate 是否给"还没长过"的曲线加生长动画
+ */
+function applyLinkStyle(mm, { animate = true } = {}) {
+  const svg = svgOf(mm);
+  if (!svg) return;
+  svg.querySelectorAll('path.markmap-link').forEach((p) => {
+    const depth = parseInt(p.getAttribute('data-depth') || '1', 10);
+    const i = Math.min(depth - 1, CONFIG.linkColors.length - 1);
+    const { start, step, min } = CONFIG.linkOpacity;
+
+    setImportant(p, 'stroke', CONFIG.linkColors[i]);
+    setImportant(p, 'stroke-width', CONFIG.linkWidths[Math.min(depth - 1, CONFIG.linkWidths.length - 1)]);
+    setImportant(p, 'opacity', Math.max(min, start - (depth - 1) * step));
+
+    // 已长过的用 data 标记，避免每次重绘都重播动画
+    if (animate && !p.dataset.grown) {
+      p.dataset.grown = '1';
+      p.style.setProperty('--len', `${p.getTotalLength()}px`);
+      p.classList.add('grow');
+      p.addEventListener('animationend', () => {
+        p.classList.remove('grow');
+        p.style.removeProperty('--len');
+      }, { once: true });
+    }
+  });
+}
+
+/** 补上 markmap 缺失的"渲染完成"钩子。
+    展开/收起时 markmap 会新建 <path class="markmap-link">，它们没被上过色，
+    会回落到 markmap 默认的无 stroke（计算值 none）—— 表现就是
+    "展开出来的连线看不见"，所以每次 renderData 之后必须重跑上色。 */
+function patchRenderData(mm, tree) {
+  if (mm.__renderDataPatched) return;
+  mm.__renderDataPatched = true;
+
+  const original = mm.renderData.bind(mm);
+  mm.renderData = async (...args) => {
+    const result = await original(...args);
+    applyLinkStyle(mm, { animate: true });
+    return result;
+  };
+}
+
+/** 首屏静默：markmap 的 ResizeObserver 会在字体/布局稳定后再触发一次
+    renderData，此时刚加载的旧连线会被误当成"新线"而播生长动画。
+    过了静默期后统一标记为"已长好"，之后就只有真正新增的线才会长。 */
+function muteInitialGrowth(mm) {
+  setTimeout(() => {
+    const svg = svgOf(mm);
+    if (svg) svg.querySelectorAll('path.markmap-link').forEach((p) => { p.dataset.grown = '1'; });
+  }, CONFIG.quietWindowMs);
+}
+
+function setImportant(el, prop, value) {
+  el.style.setProperty(prop, String(value), 'important');
+}
+
+/* ── 5. 节点圆心 ────────────────────────────────────────────────── */
+
+/** markmap 默认把 circle 放在 line 的右端（cy 在 line 中点），
+    跟 foreignObject 里的文字不垂直对齐。这里把 cx/cy 改成
+    紧贴文字右边 + 垂直居中。 */
+function attachCircleAlign(mm) {
+  const root = mm.g && mm.g.node ? mm.g.node() : null;
+  if (!root) return;
+
+  const GAP = 8;   // 圆点与文字右边缘的间距
+
+  const align = () => {
+    root.querySelectorAll('.markmap-node').forEach((node) => {
+      const fo = node.querySelector('foreignObject');
+      const circle = node.querySelector('circle');
+      if (!fo || !circle) return;
+      const fx = parseFloat(fo.getAttribute('x')) || 0;
+      const fy = parseFloat(fo.getAttribute('y')) || 0;
+      const fw = parseFloat(fo.getAttribute('width')) || 0;
+      const fh = parseFloat(fo.getAttribute('height')) || 0;
+      circle.setAttribute('cx', fx + fw + GAP);
+      circle.setAttribute('cy', fy + fh / 2);
+    });
+  };
+
+  align();
+  // 折叠/展开时 markmap 会改 foreignObject 的尺寸，要持续对齐
+  mm.__circleObserver = new MutationObserver(align);
+  mm.__circleObserver.observe(root, {
+    childList: true, subtree: true,
+    attributes: true, attributeFilter: ['width', 'height', 'x', 'y'],
+  });
+}
+
+/* ── 6. 交互 ────────────────────────────────────────────────────── */
+
+/** 双击空白处 → 适配。单击（含点小圆点展开/收起）一律不动视图。 */
+function attachInteractions(mm) {
+  const svg = svgOf(mm);
+  if (!svg) return;
+
+  // 先关掉 d3-zoom 自带的双击缩放，否则双击空白时它会先把视图放大一倍，
+  // 我们的 fit() 再拉回来 —— 表现是"先放大再弹回"的抖动。
+  // 注意 d3-zoom 是把 "dblclick.zoom" 注册在 selection（也就是 mm.svg）上的，
+  // 要往 mm.svg 上删；mm.zoom 是 markmap 自己的 dispatch，对它调 .on()
+  // 会抛 "unknown type: dblclick"（踩过），而且那个异常会中断整个模块。
+  try {
+    mm.svg.on('dblclick.zoom', null);
+  } catch (err) { /* 拿不到就算了，不影响其余逻辑 */ }
+
+  let lastFitAt = 0;
+
+  svg.addEventListener('click', (e) => {
+    // 用原生 MouseEvent.detail 判断连击次数：1 = 单击，>=2 = 双击。
+    // 这里刻意不引 d3 —— markmap 的 d3 是它内部 bundle 的，外部拿不到干净引用。
+    if (e.detail < 2) return;
+
+    // 双击在小圆点上 → 交给 markmap 自己的递归展开/收起，不要顺手适配
+    if (e.target.closest && e.target.closest('circle')) return;
+
+    // 等 markmap 的过渡走完再适配，否则量到的是动画中间态
+    const now = performance.now();
+    if (now - lastFitAt < CONFIG.fit.debounceMs) return;
+    lastFitAt = now;
+    setTimeout(() => { try { mm.fit(); } catch (err) {} }, CONFIG.fit.delayMs);
+  });
+}
+
+/* ── 7. 启动 ────────────────────────────────────────────────────── */
+
+const status = document.getElementById('status');
+
+function setStatus(text, { sticky = false } = {}) {
+  status.style.display = '';
+  status.textContent = text;
+  if (sticky) return;
+  setTimeout(() => { status.style.display = 'none'; }, 1500);
+}
+
+async function main() {
+  // file:// 的提示已由上面的静态脚本给出，这里直接不启动
+  if (!CONFIG.isLocalServer) return;
+
+  initToolbar();          // 工具栏先就绪，不必等数据
+
+  let trees, errors;
+  try {
+    ({ trees, errors } = await loadTrees());
+  } catch (err) {
+    setStatus(`读取 ${CONFIG.indexUrl} 失败：${err.message}`, { sticky: true });
+    return;
+  }
+
+  const usable = trees.filter((t) => t.md);
+  if (!usable.length) {
+    setStatus(`没有可用的内容${errors.length ? '：' + errors.join('；') : ''}`, { sticky: true });
+    return;
+  }
+  if (errors.length) console.warn('部分内容读取失败：', errors);
+
+  renderTreeList(trees, errors);
+
+  // 首屏渲染默认那份；激活时若目标不是它，自会隐藏它
+  const startId = usable.some((t) => t.id === CONFIG.defaultTreeId)
+    ? CONFIG.defaultTreeId
+    : usable[0].id;
+  activateTree(trees, startId);
+
+  window.mindmap = {
+    trees,
+    get instance() { return (instances.get(activeTreeId) || {}).mm || null; },
+    fit: () => { const mm = window.mindmap.instance; if (mm) mm.fit(); },
+    setExpandLevel: (level) => {
+      const tree = trees.find((t) => t.id === activeTreeId);
+      const mm = window.mindmap.instance;
+      if (mm && tree) setExpandLevel(mm, tree, level);
+    },
+    activate: (id) => {
+      if (activateTree(trees, id)) {
+        setStatus('已切换', {});
+        closeTreeList();          // 选完收起列表，把工具栏还原成一行
+      }
+    },
+    /* 供 convert-ui 转换完成后刷新：重读 index.json、更新列表项。
+       正在看的已存在导图实例缓存不销毁，新条目首次点开时才建。 */
+    reloadIndex: async () => {
+      try {
+        const fresh = await loadTrees();
+        if (fresh.errors.length) console.warn('部分内容读取失败：', fresh.errors);
+        trees.length = 0;
+        trees.push(...fresh.trees);
+        renderTreeList(trees, fresh.errors);
+        setStatus('清单已更新 ✓');
+      } catch (err) {
+        setStatus(`刷新清单失败：${err.message}`, { sticky: true });
+      }
+    },
+    /* 供 convert-ui 编辑保存后，用新 md 重渲染当前导图。
+       方案（经真实 markmap 0.18.10 实测验证）：
+         · setData 增量更新会残留/重复节点（库 bug）→ 销毁全新实例。
+         · 新实例用 initialExpandLevel: Infinity（关 auto-collapse），否则
+           _initializeData 会按默认层级把 depth≥2 强制 fold=1。
+         · 折叠状态判定（关键）：按「位置编号 __pos」而非节点文本——
+           · 位置编号 = 从根往下「在哪一个子节点」的链（0/1/2…）。
+           · 旧树标一遍、新树标一遍；同一位置在旧树有 → 是同一个节点
+             （哪怕文本被改过）→ 折叠状态照旧。
+           · 同一位置旧树没有 → 真新增 → 展开，且祖先全部展开。
+           这解决了「改一句文本就被当成新增、祖先全展开」的 bug：
+           改文本不动位置 → 状态保留；加节点才动位置 → 才会展开。 */
+    reloadActive: (newMd) => {
+      const tree = trees.find((t) => t.id === activeTreeId);
+      if (!tree) return false;
+      const oldMd = tree.md;
+      tree.md = newMd;
+
+      const entry = instances.get(activeTreeId);
+      if (!entry || !entry.mm) {
+        activateTree(trees, activeTreeId);   // 兜底
+        return true;
+      }
+
+      // 1. DOM 里可见节点的「文本 → 是否收起」，用于把旧树节点对到折叠状态
+      const domFold = new Map();
+      entry.el.querySelectorAll('.markmap-node').forEach((el) => {
+        const d = el.__data__;
+        if (d && d.content) domFold.set(String(d.content), d.payload ? !!d.payload.fold : false);
+      });
+
+      // 2. 旧树：给每个节点标 __pos（位置编号链），并记录「位置 → 编辑前的文本」
+      const oldRoot = transformer.transform(oldMd).root;
+      const posToOldText = new Map();   // __pos → 旧文本（编辑前）
+      assignPositions(oldRoot);
+      walkNodes(oldRoot, (node) => {
+        if (node.__pos) posToOldText.set(node.__pos, String(node.content != null ? node.content : ''));
+      });
+
+      // 3. 新树：写 fold
+      const root = transformer.transform(newMd).root;
+      assignPositions(root);
+      walkNodes(root, (node) => {
+        const pos = node.__pos;
+        if (pos && posToOldText.has(pos)) {
+          const oldText = posToOldText.get(pos);
+          // 同一位置在旧树存在 = 同一个节点（可能改了字）→ 按编辑前的折叠状态恢复
+          node.payload.fold = domFold.has(oldText) ? (domFold.get(oldText) ? 1 : 0) : 0;
+        } else {
+          // 真新增（旧树没这个位置）→ 展开
+          node.payload.fold = 0;
+        }
+      });
+
+      // 4. 记父子链，真新增节点的祖先全部展开（被收起的父会挡住它）
+      walkNodes(root, (node) => {
+        if (node.children) node.children.forEach((ch) => { ch.__parent = node; });
+      });
+      walkNodes(root, (node) => {
+        if (node.__pos && !posToOldText.has(node.__pos)) {
+          let p = node.__parent;
+          while (p) { p.payload.fold = 0; p = p.__parent; }
+        }
+      });
+
+      // 5. 销毁旧实例 + 全新实例（Infinity 关 auto-collapse）
+      try { entry.mm.destroy && entry.mm.destroy(); } catch (err) {}
+      entry.el.textContent = '';
+      const mm = Markmap.create(entry.el, {
+        ...markmapOptions(),
+        initialExpandLevel: Infinity,
+      }, root);
+      mm.fit();
+
+      // 6. 重挂装饰（重建后不重挂连线和圆点会失效）
+      attachCircleAlign(mm);
+      attachInteractions(mm);
+      applyLinkStyle(mm, { animate: false });
+      patchRenderData(mm, tree);
+      muteInitialGrowth(mm);
+      entry.mm = mm;
+
+      setStatus('已更新 ✓');
+      return true;
+    },
+  };
+
+  setStatus('加载完成 ✓');
+}
+
+/** 当前激活的是哪份导图（工具栏的动作都作用在它身上） */
+let activeTreeId = CONFIG.defaultTreeId;
+
+/** 展开/收起导图列表 */
+function closeTreeList() { setTreeListOpen(false); }
+
+/** 展开/收起导图列表。传 force 可强制指定状态。 */
+function setTreeListOpen(force) {
+  const list = document.getElementById('treeList');
+  const btn = document.getElementById('treesBtn');
+  if (!list || !btn) return;
+  const open = force === undefined ? !list.classList.contains('open') : force;
+  list.classList.toggle('open', open);
+  btn.classList.toggle('active', open);
+  btn.title = open ? '收起导图列表' : '导图列表';
+  if (open) revealActiveInList();
+}
+
+main();
+</script>
+
+<!-- 转换面板（PDF → 导图）：独立增量，不碰上面的渲染代码 -->
+<script src="convert-ui.js?v=20261010"></script>
+</body>
+</html>

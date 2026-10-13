@@ -1,0 +1,254 @@
+/* 转换面板样式 —— 沿用渲染页的古籍配色 CSS 变量 */
+.cu-entry { font-size: 13px; }
+
+/* 列表项尾巴的管理按钮 */
+.tl-item .cu-item-gear {
+  display: inline-block;
+  margin-left: 8px;
+  opacity: 0;                      /* 悬停才显现，平时不挤占宽度感知 */
+  transition: opacity .15s;
+  color: var(--ink-soft, #6B5D45);
+  font-weight: 700;
+  padding: 0 3px;
+}
+.tl-item:hover .cu-item-gear { opacity: 1; }
+/* 当前选中项字色是纸色，小按钮也得跟着变 */
+.tl-item.current .cu-item-gear { color: var(--paper-light, #FBF6E9); opacity: 0.8; }
+
+/* 待补充小红点 */
+.cu-gap-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--vermilion, #8B2500);
+  flex-shrink: 0;
+}
+
+/* 条目管理菜单 */
+.cu-menu {
+  position: fixed; z-index: 250;
+  background: var(--paper-light, #FBF6E9);
+  border: 1px solid var(--border, #D9CFB8);
+  border-radius: 4px;
+  box-shadow: 0 4px 16px rgba(44, 36, 22, 0.25);
+  min-width: 160px;
+  font-size: 13px;
+  font-family: "STKaiti", "KaiTi", "楷体", "Microsoft YaHei", sans-serif;
+}
+.cu-menu-item {
+  padding: 8px 14px;
+  cursor: pointer;
+  color: var(--ink, #2C2416);
+}
+.cu-menu-item:hover { background: var(--vermilion-light, #F2DCD0); color: var(--vermilion, #8B2500); }
+.cu-menu-item.cu-danger:hover { background: var(--vermilion, #8B2500); color: var(--paper-light, #FBF6E9); }
+
+.cu-shade {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(44, 36, 22, 0.45);
+  display: flex; align-items: center; justify-content: center;
+}
+.cu-box {
+  background: var(--paper-light, #FBF6E9);
+  border: 1px solid var(--border, #D9CFB8);
+  border-top: 3px solid var(--vermilion, #8B2500);
+  border-radius: 4px;
+  box-shadow: 0 8px 32px rgba(44, 36, 22, 0.35);
+  padding: 20px 24px;
+  width: min(480px, calc(100vw - 40px));
+  font-family: "STKaiti", "KaiTi", "楷体", "Microsoft YaHei", sans-serif;
+  color: var(--ink, #2C2416);
+}
+.cu-box h2 {
+  margin: 0 0 12px; font-size: 17px; color: var(--ink, #2C2416);
+  letter-spacing: 1px;
+}
+.cu-hint { font-size: 12px; color: var(--ink-soft, #6B5D45); margin: 8px 0; }
+.cu-ok { color: #2C5F2D; font-size: 13px; }
+.cu-warn { color: var(--vermilion, #8B2500); font-size: 12px; }
+.cu-err { color: var(--vermilion, #8B2500); font-size: 13px; }
+.cu-err-box {
+  margin-top: 12px;
+  padding: 10px 14px;
+  border: 1px solid var(--vermilion, #8B2500);
+  border-radius: 4px;
+  background: var(--paper, #F5F0E8);
+}
+.cu-err-head {
+  margin: 0 0 6px;
+  font-weight: 700;
+  color: var(--vermilion, #8B2500);
+  font-size: 14px;
+}
+.cu-err-box .cu-err {
+  margin: 0;
+  white-space: pre-line;         /* 诊断信息多行，别折成一行 */
+  line-height: 1.7;
+}
+.cu-fname { font-size: 12px; color: var(--ink-faint, #B8AC8E); margin: 8px 0 0; }
+
+.cu-input {
+  width: 100%; box-sizing: border-box;
+  padding: 8px 10px; font-size: 13px;
+  border: 1px solid var(--border, #D9CFB8); border-radius: 3px;
+  background: var(--paper, #F5F0E8);
+  font-family: inherit;
+}
+.cu-input:focus { outline: none; border-color: var(--vermilion, #8B2500); }
+
+/* 设置面板里的下拉与标签 */
+.cu-select {
+  display: block; margin-bottom: 4px;
+  font-family: inherit;
+}
+.cu-lbl {
+  display: block; margin: 12px 0 4px;
+  color: var(--ink, #2C2416);
+}
+.cu-h3 {
+  margin: 18px 0 6px; font-size: 14px;
+  color: var(--ink, #2C2416);
+  border-top: 1px dashed var(--border, #D9CFB8);
+  padding-top: 12px;
+  letter-spacing: 1px;
+}
+
+.cu-drop {
+  border: 2px dashed var(--ink-faint, #B8AC8E);
+  border-radius: 6px;
+  padding: 28px 16px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color .2s, background-color .2s;
+}
+.cu-drop.over, .cu-drop:focus {
+  border-color: var(--vermilion, #8B2500);
+  background: var(--vermilion-light, #F2DCD0);
+}
+.cu-drop-main { margin: 0 0 6px; font-size: 15px; color: var(--ink, #2C2416); }
+
+.cu-style-row { display: flex; gap: 16px; margin: 14px 0 10px; font-size: 13px; flex-wrap: wrap; }
+.cu-style-row label { cursor: pointer; color: var(--ink, #2C2416); display: flex; align-items: center; gap: 5px; }
+.cu-style-row input { accent-color: var(--vermilion, #8B2500); }
+
+/* 端口占用面板 */
+.cu-proc {
+  margin-top: 10px; padding: 10px 12px;
+  border: 1px solid var(--border, #D9CFB8); border-radius: 4px;
+  background: var(--paper, #F5F0E8);
+}
+.cu-proc-head { font-size: 13px; color: var(--ink, #2C2416); }
+.cu-proc-cmd {
+  font-size: 12px; color: var(--ink-soft, #6B5D45);
+  margin-top: 4px; word-break: break-all;
+  font-family: Consolas, Menlo, monospace;
+}
+.cu-code {
+  font-size: 12px; padding: 4px 8px;
+  background: var(--ink, #2C2416); color: var(--paper-light, #FBF6E9);
+  border-radius: 3px; font-family: Consolas, Menlo, monospace;
+  white-space: nowrap; overflow-x: auto; max-width: 260px;
+  display: inline-block; vertical-align: middle;
+}
+
+/* ── 编辑导图面板：左侧固定分栏，右侧导图让位 ──
+   打开面板时 body 加 .cu-split，右侧全部元素推 380px。
+   markmap 的 canvas 是 width:100% height:100vh，用 margin+calc 让位。 */
+.cu-editor-panel {
+  position: fixed; inset: 0 auto 0 0;
+  width: 380px;
+  z-index: 130;
+  background: var(--paper-light, #FBF6E9);
+  border-right: 1px solid var(--border, #D9CFB8);
+  box-shadow: 2px 0 14px rgba(44, 36, 22, 0.18);
+}
+.cu-editor-panel-inner {
+  height: 100%;
+  display: flex; flex-direction: column;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  gap: 6px;
+  outline: none;
+}
+.cu-panel-head {
+  display: flex; align-items: baseline; gap: 10px;
+}
+.cu-panel-head h2 {
+  margin: 0; font-size: 16px; color: var(--ink, #2C2416);
+  letter-spacing: 1px; flex: 0 0 auto;
+}
+.cu-panel-title {
+  font-size: 12px; color: var(--ink-faint, #B8AC8E);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.cu-search {
+  display: flex; align-items: center; gap: 6px;
+  margin: 0;
+}
+.cu-search .cu-input { flex: 1 1 auto; }
+#cuSearchInfo {
+  font-size: 12px; color: var(--ink-soft, #6B5D45);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 42%;
+}
+#cuSearchInfo.cu-err { color: var(--vermilion, #8B2500); flex: none; max-width: none; }
+.cu-tips { margin-top: 0; line-height: 1.8; flex: 0 0 auto; }
+.cu-tips b { color: var(--vermilion, #8B2500); }
+.cu-hint { flex: 0 0 auto; }
+
+/* 正文区吃满剩余高度；横向滚动代码长行，不折行 */
+.cu-ta {
+  width: 100%; box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 13px; line-height: 1.55;
+  padding: 10px 12px; margin-top: 4px;
+  resize: none;
+  tab-size: 2;
+}
+.cu-panel-foot { margin-top: 10px; flex: 0 0 auto; }
+
+/* ── 分屏让位：面板打开时 body.cu-split ── */
+body.cu-split .mm-canvas {
+  margin-left: 380px;
+  width: calc(100% - 380px);
+}
+body.cu-split .toolbar,
+body.cu-split .fab,
+body.cu-split .fab-tip {
+  left: 392px;               /* 380 + 12 原始间距 */
+}
+body.cu-split #status {
+  left: 392px;
+}
+
+.cu-btn {
+  padding: 8px 18px; font-size: 13px; font-family: inherit;
+  border: 1px solid var(--border, #D9CFB8); border-radius: 3px;
+  background: var(--paper, #F5F0E8); color: var(--ink, #2C2416);
+  cursor: pointer; transition: all .2s;
+}
+.cu-btn:hover { border-color: var(--vermilion, #8B2500); color: var(--vermilion, #8B2500); }
+.cu-btn.cu-primary {
+  background: var(--vermilion, #8B2500); border-color: var(--vermilion, #8B2500);
+  color: var(--paper-light, #FBF6E9);
+}
+.cu-btn.cu-primary:hover { background: #A03000; color: var(--paper-light, #FBF6E9); }
+.cu-row { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+.cu-go { width: 100%; margin-top: 6px; }
+
+.cu-steps { font-size: 12px; color: var(--ink-faint, #B8AC8E); margin: 14px 0 6px; }
+.cu-steps .past { color: #2C5F2D; }
+.cu-steps .now { color: var(--vermilion, #8B2500); font-weight: 700; }
+.cu-progress {
+  height: 6px; border-radius: 3px; overflow: hidden;
+  background: var(--border, #D9CFB8);
+}
+.cu-progress > div {
+  height: 100%;
+  background: linear-gradient(to right, var(--vermilion, #8B2500), #A03000);
+  transition: width .5s ease;
+  border-radius: 3px;
+}
