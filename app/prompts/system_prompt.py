@@ -1,17 +1,15 @@
 """system_prompt 组装：spec.md + 风格片段 + 对应参考样例首 30 行。
 
-参考样例就是对齐密度的锚。A 风格样例是旧目录里的成品笔记（单一事实源，
-别在这里复述文案——要改规范去改 prompts/*.md）。
+参考样例就是对齐密度的锚，随包放在 prompts/samples/（脱敏，可入库）。
+要改规范去改 prompts/*.md，别在这里复述文案。
 """
 from pathlib import Path
-
-from ..settings import ROOT
 
 PROMPTS_DIR = Path(__file__).resolve().parent
 
 SAMPLES = {
-    "A": ROOT / "notes" / "bagu-20260927-2150.md",
-    "B": ROOT / "notes" / "bagu-20260927-2222.md",
+    "A": PROMPTS_DIR / "samples" / "sample_a.md",
+    "B": PROMPTS_DIR / "samples" / "sample_b.md",
 }
 
 
