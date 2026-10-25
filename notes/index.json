@@ -1,0 +1,10 @@
+{
+  "trees": [
+    {
+      "id": "hongloumeng-demo",
+      "title": "红楼梦 · 阅读导图",
+      "file": "notes/hongloumeng-demo.md",
+      "default": true
+    }
+  ]
+}

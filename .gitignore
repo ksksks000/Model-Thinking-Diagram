@@ -1,0 +1,8 @@
+# gh-pages 分支专用 gitignore：deploy 在最简静态子集上。
+# 这里保留 .lock 规则以便未来有人跑本地服务时不会被误提交。
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
