@@ -5,6 +5,11 @@
       "title": "红楼梦 · 阅读导图",
       "file": "notes/hongloumeng-demo.md",
       "default": true
+    },
+    {
+      "id": "agent-learning-path",
+      "title": "Agent 学习路径 · 导读",
+      "file": "notes/agent-learning-path.md"
     }
   ]
 }
