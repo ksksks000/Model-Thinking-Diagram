@@ -239,6 +239,7 @@
     to { stroke-dashoffset: 0; }
   }
 </style>
+<link rel="stylesheet" href="static-editor.css">
 </head>
 <body>
 <div class="toolbar" id="toolbar">
@@ -253,9 +254,9 @@
     <a data-action="fit">适配</a>
     <a data-action="expand">展开</a>
     <a data-action="collapse-all">收起</a>
+    <a id="editBtn" title="编辑当前导图（仅保存在本浏览器）">✎ 编辑</a>
   </div>
-  <!-- 静态只读部署：转换 / 设置 / 编辑 / 端口查询 需 FastAPI 后端，故移除。
-       保留 ☰ 列表、▾ 收起、适配 / 展开 / 收起 几项纯前端控件。 -->
+  <!-- 静态部署：转换 / 设置 / 端口查询需后端，故移除；编辑改为浏览器本地保存。 -->
 </div>
 <div class="fab" id="fab" title="展开工具栏"></div>
 <div class="fab-tip" id="fabTip">思维导图</div>
@@ -341,6 +342,8 @@ const CONFIG = {
   indexUrl: 'notes/index.json',
   // 首屏渲染哪一份（index.json 里的 id）
   defaultTreeId: 'java',
+  // 本地编辑覆盖的 localStorage 键前缀；static-editor.js 用同一前缀
+  localMdPrefix: 'mindmap.local-md.v1:',
   // 是否是「本地服务器」打开。file:// 下 fetch 会被 CORS 拦，只能给出提示
   isLocalServer: location.protocol === 'http:' || location.protocol === 'https:',
 };
@@ -350,6 +353,13 @@ const CONFIG = {
        notes/index.json  →  [{ id, title, file }, ...]
        notes/<file>      →  Markdown 原文
    加一份导图 = 新增一个 .md + 在 index.json 里加一行，不用碰本文件任何代码。 */
+
+/** 读浏览器里保存的本地修改。没有就返回空串。
+    localStorage 可能被禁用（隐私模式），一律吞掉异常。 */
+function readLocalOverride(id) {
+  try { return localStorage.getItem(CONFIG.localMdPrefix + id) || ''; }
+  catch (err) { return ''; }
+}
 
 /** 读清单 + 读所有 Markdown 正文。用 text() 而不是 json()——
     因为这里要的是纯文本，不需要再序列化一次。 */
@@ -364,10 +374,12 @@ async function loadTrees() {
     try {
       const r = await fetch(tree.file, { cache: 'no-store' });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
-      tree.md = await r.text();
+      tree.serverMd = await r.text();      // 原始版，供编辑器「恢复原样」
+      tree.md = readLocalOverride(tree.id) || tree.serverMd;
     } catch (err) {
-      tree.md = null;
-      errors.push(`${tree.file}：${err.message}`);
+      tree.serverMd = '';
+      tree.md = readLocalOverride(tree.id) || null;
+      if (!tree.md) errors.push(`${tree.file}：${err.message}`);
     }
   }));
 
@@ -901,7 +913,7 @@ function setTreeListOpen(force) {
 main();
 </script>
 
-<!-- 静态部署：convert-ui.js 需 /api/* 后端，故省略。
-     如需完整功能，请克隆 main 分支并双击 启动.bat 本地运行。 -->
+<!-- 静态部署没有 /api/* 后端；本地编辑由 static-editor.js 用 localStorage 实现。 -->
+<script src="static-editor.js"></script>
 </body>
 </html>

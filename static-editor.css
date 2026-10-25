@@ -1,0 +1,82 @@
+/* 纯前端本地编辑面板（GitHub Pages 静态 demo）。
+   沿用渲染页的古籍配色变量；不依赖任何后端。 */
+.se-panel {
+  position: fixed; inset: 0 auto 0 0;
+  width: 400px;
+  z-index: 130;
+  background: var(--paper-light, #FBF6E9);
+  border-right: 1px solid var(--border, #D9CFB8);
+  box-shadow: 2px 0 14px rgba(44, 36, 22, 0.18);
+}
+.se-inner {
+  height: 100%;
+  display: flex; flex-direction: column;
+  padding: 14px 16px;
+  box-sizing: border-box;
+  gap: 8px;
+  font-family: "STKaiti", "KaiTi", "楷体", "Microsoft YaHei", sans-serif;
+  color: var(--ink, #2C2416);
+}
+.se-head { display: flex; align-items: baseline; gap: 10px; }
+.se-head h2 {
+  margin: 0; font-size: 16px; color: var(--ink, #2C2416);
+  letter-spacing: 1px; flex: 0 0 auto;
+}
+.se-title {
+  font-size: 12px; color: var(--ink-faint, #B8AC8E);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.se-hint {
+  margin: 0; font-size: 12px; line-height: 1.7;
+  color: var(--ink-soft, #6B5D45);
+}
+.se-hint b { color: var(--vermilion, #8B2500); }
+.se-ta {
+  flex: 1 1 auto; width: 100%; box-sizing: border-box;
+  resize: none; padding: 10px 12px;
+  font: 13px/1.7 ui-monospace, Consolas, "Courier New", monospace;
+  color: var(--ink, #2C2416);
+  background: var(--paper, #F5F0E8);
+  border: 1px solid var(--border, #D9CFB8);
+  border-radius: 3px;
+  outline: none;
+  white-space: pre; overflow: auto;
+}
+.se-ta:focus { border-color: var(--vermilion, #8B2500); }
+.se-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.se-btn {
+  padding: 8px 14px; font-size: 13px; font-family: inherit;
+  border: 1px solid var(--border, #D9CFB8); border-radius: 3px;
+  background: var(--paper, #F5F0E8); color: var(--ink, #2C2416);
+  cursor: pointer; transition: all .2s;
+}
+.se-btn:hover { border-color: var(--vermilion, #8B2500); color: var(--vermilion, #8B2500); }
+.se-btn.se-primary {
+  background: var(--vermilion, #8B2500); border-color: var(--vermilion, #8B2500);
+  color: var(--paper-light, #FBF6E9);
+}
+.se-btn.se-primary:hover { background: #A03000; color: var(--paper-light, #FBF6E9); }
+.se-btn.se-danger:hover { background: var(--vermilion, #8B2500); color: var(--paper-light, #FBF6E9); }
+.se-flash { min-height: 18px; font-size: 12px; color: #2C5F2D; }
+.se-flash.err { color: var(--vermilion, #8B2500); }
+
+/* 分屏让位：面板打开时给右侧导图与工具栏腾地方 */
+body.se-split .mm-canvas {
+  margin-left: 400px;
+  width: calc(100% - 400px);
+}
+body.se-split .toolbar,
+body.se-split .fab,
+body.se-split .fab-tip,
+body.se-split #status {
+  left: 412px;
+}
+
+@media (max-width: 720px) {
+  .se-panel { width: 100%; border-right: none; }
+  body.se-split .mm-canvas { margin-left: 0; width: 100%; }
+  body.se-split .toolbar,
+  body.se-split .fab,
+  body.se-split .fab-tip,
+  body.se-split #status { left: 12px; }
+}
